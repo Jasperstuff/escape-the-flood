@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Escape the Flood</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="splash">
+    <div id="splash-content">
+      <button id="splash-play" class="splash-btn">🔊</button>
+      <button id="splash-mute" class="splash-btn">🔇</button>
+      <p class="splash-text">Best played with sound</p>
+    </div>
+  </div>
+
+  <div id="game-container" class="hidden">  
+    <div id="scene"></div>
+    <div id="choices"></div>
+  </div>
+  
+  <div id="blur-overlay"></div>
+   <audio id="bg-audio" src="assets/sfx/rain.mp3" loop preload="auto"></audio>
+  <audio id="thunder" src="assets/sfx/thunder.mp3" preload="auto"></audio>
+  <script src="script.js"></script>
+</body>
+</html>

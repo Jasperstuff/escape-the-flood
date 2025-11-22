@@ -1,0 +1,253 @@
+/* --- Custom Fonts --- */
+@font-face {
+  font-family: 'JDMelted';
+  src: url('assets/fonts/WhiteStorm.woff2') format('woff2'),
+       url('assets/fonts/WhiteStorm.woff') format('woff'),
+       url('assets/fonts/WhiteStorm.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'RomanAntique';
+  src: url('assets/fonts/RomanAntique.woff2') format('woff2'),
+       url('assets/fonts/RomanAntique.woff') format('woff'),
+       url('assets/fonts/RomanAntique.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: '';
+  src: url('assets/fonts/oldsh.woff2') format('woff2'),
+        url('assets/fonts/oldsch.woff'), format('woff'),
+        url('assets/fonts/oldsch.ttf'), format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+/* --- Body / Game Container --- */
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: #000;
+  
+  background-size: cover;  
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  font-family: 'RomanAntique', serif;
+  color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-image 1s ease-in-out;
+}
+
+#game-container {
+  will-change: filter, opacity, transform;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 5vw 4vw;
+  border-radius: 1em;
+  max-width: 90vw;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 1rem;
+  
+  /* fade-to-blur */
+  transition:
+    filter 0.4s ease-in-out,
+    opacity 0.4s ease-in-out,
+    transform 0.4s ease-in-out;
+  
+  filter: blur(0px);
+  opacity: 1;
+  transform: scale(1);
+  
+}
+
+.blur-transition {
+  filter: blur(16px);
+  opacity: 0.3;
+  transform: scale(1.02);
+}
+
+
+
+/* thumbnail poss */
+#initial-thumb {
+  max-width: 200px;
+  width: 100%;
+  display: block;
+  margin: 0 auto;
+}
+
+
+/* Scene text */
+#scene {
+  opacity: 1;
+  transition: none;
+}
+
+/* Custom font per tag */
+#scene h1 {
+  font-family: 'JDMelted', cursive;
+  font-size: 58px;
+}
+
+#scene p {
+  font-family: 'RomanAntique', serif;
+  font-size: 32px;
+  line-height: 1;
+  margin-bottom: 1em;
+}
+
+#scene br {
+  line-height: 0.5;
+  margin: 0;
+  padding: 0;
+}
+
+.small-gap {
+  display: block;
+  height: 2px;
+}
+
+.red-text {
+  color: #ff0000;
+}
+
+
+
+/* notebook */
+.scene-notebook {
+  max-width: 600px; max-height: 600px;
+  width: 100%; height: auto;
+  display: block;
+  margin: 20px auto;
+  border-radius: 10px;
+}
+
+
+
+/* Buttons */
+#choices button {
+  display: block;
+  margin: 10px auto;
+  padding: 15px 30px;
+  font-size: 1.8rem;
+  cursor: pointer;
+  border-radius: 10px;
+  border: none;
+  background-color: #444;
+  color: #fff;
+  transition: background 0.3s;
+  font-family: 'RomanAntique', serif;
+}
+
+#choices button:hover {
+  background-color: #666;
+}
+
+/* blur overlay */
+#blur-overlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(0px);
+  background: rgba(0,0,0,0);
+  transition: backdrop-filter 1.2s ease-in-out, background 1.2s ease-in-out;
+  pointer-events: none;
+  z-index: 999;
+}
+
+#blur-overlay.active {
+  backdrop-filter: blur(16px);
+  background: rgba(0,0,0,0.3);
+}
+
+/* splash screen/confirm audio play */
+#splash {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#splash-content {
+  text-align: center;
+  color: #eee;
+  font-family: sans-serif;
+}
+
+/* Splash buttons (shared style) */
+.splash-btn {
+  font-size: 5rem;       /* same as your 🔊 button */
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #eee;
+  margin: 0.5rem;         /* space between buttons */
+}
+
+.splash-btn:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Layout for buttons */
+#splash-content {
+  text-align: center;
+  color: #eee;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: row;  /* side by side */
+  gap: 2rem;            /* space between buttons */
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-text {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+
+.hidden {
+  display: none;
+}
+
+#splash-content {
+  text-align: center;
+  color: #eee;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column; /* or row for side-by-side */
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  #game-container {
+    padding: 6vw 4vw;
+  }
+
+  #scene h1 {
+    font-size: 8vw;
+  }
+
+  #scene p {
+    font-size: 5.5vw;
+  }
+
+  #choices button {
+    font-size: 5vw;
+    padding: 4vw 6vw;
+  }
+}
+
+
