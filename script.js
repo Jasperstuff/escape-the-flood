@@ -1,373 +1,398 @@
-(function () {
-  // Elements present at load
-  const audio   = document.getElementById('bg-audio');       // rain
-  const thunder = document.getElementById('sfx-thunder');    // thunder SFX
-  const paper   = document.getElementById('sfx-paper');      // paper SFX
-  const muteBtn = document.getElementById('mute-btn');
-  const hint    = document.getElementById('autoplay-hint');
-  const playBtn = document.getElementById('play-btn');
-  const sceneRoot = document.getElementById('scene-root');
-  const fadeLayer = document.getElementById('fade-overlay');
+// =========================
+// GLOBAL VARIABLES
+// =========================
+let isMuted = false;
 
-  // Modal refs (may be present or created dynamically)
-  let modal = document.getElementById('image-modal');
-  let modalClose = document.getElementById('modal-close');
-  let modalImg = modal ? modal.querySelector('.image-modal__img') : null;
-  let lastFocusedEl = null;
+// =========================
+//  SCENES
+// =========================
 
-  // Game state
-  const state = {
-    notebookOpened: false,
-  };
-
-  // Config
-  const TARGET_VOLUME  = 0.5;  // rain
-  const THUNDER_VOLUME = 0.8;  // thunder
-  const PAPER_VOLUME   = 0.9;  // paper
-  const STORAGE_KEY = 'etf_sound_muted';
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // Scenes
-  const scenes = {
-    intro: {
-      bodyClass: 'scene-intro',
-      title: 'Escape the Flood',
-      lead: 'Can you escape before the flood?',
-      showPlay: true,
-      extraHTML: ''
-    },
-    cell: {
-      bodyClass: 'scene-cell',
-      title: '',
-      lead:
-        'You awake to the sound of heavy rain and occasional booming thunder. The room is slightly dark with a dim light. ' +
-        'Cold concrete walls are lined with indiscernible writings and markings. Bars are fastened tightly over the only narrow window. \n\n' +
-        'You realize you are in a prison cell of sorts, potentially trapped here. You look down and see a small notebook with a list written on it.',
-      showPlay: false,
-      extraHTML: `
-        <p>
-          <button id="open-notebook" class="btn btn-action">You pick up the notebook</button>
-        </p>
-      `
-    },
-    corridor: {
-      bodyClass: 'scene-corridor',
-      title: '',
-      lead:
-        "After reading the list, you are left with more questions than answers. Who is Jerry? Where even are you? As you ponder the endless possibilities, you decide to:",
-      showPlay: false,
-      extraHTML: `
-        <div class="choice-list">
-          <button id="btn-viewport"   class="btn btn-action btn-choice">Look out the door's viewport</button>
-          <button id="btn-yell-jerry" class="btn btn-action btn-choice">Yell for Jerry</button>
-          <button id="btn-give-up"    class="btn btn-action btn-choice">Give up</button>
-        </div>
-      `
-    },
+const scenes = {
+  start: {
+    text: `<h1>Escape the Flood</h1>
+    <p>Can you escape before the flood?</p>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "", 
+    fade: true,
+    choices: [{ text: "Wake up in your cell", next: "cell" }]
+  },
+  cell: {
+    text: `<h1>You wake up...</h1>
+    <br>
+    <p>You wake up to the sounds of heavy rain and occasional thunder. The room is damp, dim, and has an inescapable sense of dread.</p>
+    <p>You realize that it's a prison cell. You begin to wonder what landed you here, but you notice a small white notebook with words written down on it.</p>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "You read the notebook", next: "notebookView" },
+    ]
+  },
+  
+    notebookView: {
+    text: `<img src="assets/img/notebook.jpg" class="scene-notebook">`,
+    img: "assets/img/start.jpg",
+    sound: "assets/sfx/notebook.mp3", 
+    fade: true,
+    choices: [
+      { text: "Close", next: "cellLeft" }
+    ]
+  },
+  
+  
+  cellLeft: {
+    text: `<h1>After reading the list,</h1>
+    <br>
+    <p>You suddenly have more questions than answers. Who's Jerry? What do you mean, don't die? Who even wrote this?</p>
+    <p>After spending a moment to ponder, a drop of cold rain drips onto the notebook, causing the fresh ink to smear off the page.</p>
+    <p>Looking around the room a bit more, you see there's a door with a small barred window behind you.</p>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Yell for Jerry", next: "jerryScene" },
+      { text: "Look out the window", next: "viewport" },
+      { text: "Give up", next: "giveUp" }
+    ]
+  },
+  jerryScene: {
+    text: `<h1>Yell for Jerry</h1>
+    <br>
+    <p>You call out for someone named Jerry. Other than a faint echo, you get no response.</p>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "assets/sfx/hey.mp3", 
+    fade: true,
+    choices: [
+      { text: "Try something else", next: "cellLeft" },
+    ]
+  },
+    giveUp: {
+    text: `<h1>You give up - <span class="red-text">Ending 1</span></h1>
+    <br>
+    <p>You decide to just give up. You decide not to fight anything anymore. All hope is gone, now that you're trapped in a small cell. Nobody is around you as far as you can tell.</p>
+    <p>Between thhe blasts of occasional thunder, you hear the rain gain intensity outside. That drip turned into a stream, which turned into a gush of cold, dark water flowing into your cell.</p>
+    <p>The water begins to rapidly fill the room, up to the ceiling. You lie in silence, slowly losing the ability to breathe. Your vision fades to black, and slowly, your conscious falls into nothing.</p>
+    <h1>You lose.</h1>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Try again?", next: "start" },
+    ]
+  },
     viewport: {
-      bodyClass: 'scene-viewport',
-      title: 'Through the Viewport',
-      lead:
-        'You press your eye to the rusted slot. A light flickers across wet stone, and distant footsteps smear into the rain. ' +
-        'For a heartbeat, a shadow pauses—then is gone.',
-      showPlay: false,
-      extraHTML: ''
-    },
-    callJerry: {
-      bodyClass: 'scene-corridor', // same background as corridor
-      title: '“Jerry!”',
-      lead:
-        'You call out, voice bouncing down unseen halls. \n\n' +
-        'Silence… then a hoarse whisper on the other side of the door: “Keep it down. They listen.”',
-      showPlay: false,
-      extraHTML: `
-        <p><button id="back-to-corridor" class="btn btn-action">Back</button></p>
-      `
-    },
-    ending1: {
-      bodyClass: 'scene-ending',
-      title: 'Ending #1-resignation',   // exact text requested
-      lead:
-        'You sink to the floor. The notebook lies open, ink bleeding in the damp air. \n\n' +
-        'Outside, water eats at the walls. You close your eyes, and the sound becomes everything.',
-      showPlay: false,
-      extraHTML: `
-        <p><button id="restart-btn" class="btn btn-action">Restart</button></p>
-      `
+    text: `<h1>You look out the window...</h1>
+    <br>
+    <p>You look out the small window in the door. You see a series of cells, each as damp and dank as the one you are stuck in. </p>
+    <p>You also notice the fluorescent flickering bulbs in the reflections of the puddles of water on the floor. You don't notice much else until you hear the sound of something shifting in the dark.</p>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "What is that?", next: "whatIsThat" },
+    ]
+  },
+  
+    whatIsThat: {
+    text: `<h1>What is that?</h1>
+    <br>
+    <p>You hear a shifting sound in the dark, and notice a shadow slowly moving in your direction. You realize there's a person out there, coming towards your cell. You hear heavy breathing, closer and closer, outside the door.</p>
+    <p>A figure approaches the door. You see the man: Disheveled, older, and relatively thin, but breathing heavily and slightly struggling to do so. You notice he's wearing a dull orange jumpsuit. He looks up to you with hazel eyes, and smiles a crooked but relieved smile.</p>
+    <p>"Hey there, champ."</p>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Who are you?", next: "jerryQuestionMark" },
+    ]
+  },
+  
+    
+    jerryQuestionMark: {
+    text: `<h1>Who are you?</h1>
+    <br>
+    <p>The man laughs slightly and says, "Forgot me already, did ya? It's all good. Name's Jerry. How's that head of yours?"</p>
+    <p>You don't recall ever meeting this person, nor do you even recall who you are yourself. You feel a drip of something thicker than water come from your head, and realize your head is slightly bleeding. Your head is bandaged, and you begin to feel a twinge of pain radiating from the gash in your head.</p>
+    <p>"Better keep an eye on that, buddy." Jerry points out, with slight concern in his expression. He lifts his bandaqed hand up and places what appears to be a rusted skeleton key into your door's keyhole. He unlocks the door.</p>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "assets/sfx/laugh.mp3", 
+    fade: true,
+    choices: [
+      { text: "Push open the door", next: "helpJerry" },
+    ]
+  },
+  
+      
+    helpJerry: {
+    text: `<h1>You open the door</h1>
+    <br>
+    <p>The door squeaks in agony, barely having ever been used. You're still not sure where you are or how you got here. You turn to Jerry, who is no longer smiling. He kneels down, now seemingly quite pallor. He looks up at you, sweat drops forming on his head.</p>
+    <p>"Hey champ, can you go to the lunch room and grab me one of those red bottles of, uh, juice? I'm diabetic and my uh, sugars are low. Hey, yeah, you remember where the cafe is, yeah? Down that hall, towards the guard booth. Yeah, you'll be fine, go on, now." Jerry looks back down, and places his fingertips to his forehead.</p>
+    <p>He seems pretty legitimate, and he just helped you out, so you decide to comply. Maybe you'll find out where you are by exploring a bit, as well.</p>
+    <br>`,
+    img: "assets/img/start.jpg",
+    sound: "assets/sfx/door-squeak.mp3", 
+    fade: true,
+    choices: [
+      { text: "Head down the hallway", next: "hallwayMain" },
+    ]
+  },
+  
+        
+    hallwayMain: {
+    text: `<h1>You head towards the hallway</h1>
+    <br>
+    <p>You turn towards the rusty, moist hallway and come across threee different options. Remember: You are looking for some sort of red juice in the cafe for Jerry.</p> 
+    <p>You decide to...</p>
+    <br>`,
+    img: "assets/img/hall.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Look to your left", next: "hallwayLeft" },
+      { text: "Look to your right", next: "hallwayRight" },
+      { text: "Move forward", next: "hallwayForward" },
+    ]
+  },
+  
+      hallwayLeft: {
+    text: `<h1>You look to your left and</h1>
+    <br>
+    <p>You notice an open cell with a thin but clean bed. The mattress appears to have never been used before. The cell does not appear to be locked.</p>
+    <p>You don't need to go in there.</p>
+    <br>`,
+    img: "assets/img/cell-left.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Back", next: "hallwayMain" },
+    ]
+  },
+  
+        hallwayRight: {
+    text: `<h1>You look to your right</h1>
+    <br>
+    <p>You notice a very dark cell to your right. The door appears to be chained shut. You aren't entirely sure if anything or anyone is locked up behind the barred door, but you decide you don't want to find out.</p>
+    <p>You don't need to go in there.</p>
+    <br>`,
+    img: "assets/img/cell-right.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Back", next: "hallwayMain" },
+    ]
+  },
+  
+        hallwayForward: {
+    text: `<h1>You move forward</h1>
+    <br>
+    <p>You walk forward swiftly, but gracefully, avoiding multiple puddles forming slowly on the cold concrete ground.</p>
+    <p>You eventually come up to what appears to be a dimly lit guard station. You step up to the window and notice a small sign on the counter that says "ring bell" and a small red bell next to the sign.</p>
+    <br>`,
+    img: "assets/img/guards.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Ring the bell", next: "ringBell" },
+    ]
+  },
+  
+          ringBell: {
+    text: `<h1>You ring the bell</h1>
+    <br>
+    <p>The sound of the red bell permeates the empty, wet concrete halls. After what feels like several seconds, you hear a voice coming from the back of the booth.</p>
+    <p>"Wha-what do you need!?" The voice appears to be that of an older, thicker male. The voice is slurred and sloshy, as if the person speaking has been drinking too much of something.</p>
+    <p>You hesitate, but decide to ask:</p>
+    <br>`,
+    img: "assets/img/guards.jpg",
+    sound: "assets/sfx/bell.wav", 
+    fade: true,
+    choices: [
+      { text: "Where is the cafeteria?", next: "whereCafe" },
+    ]
+  },
+  
+            whereCafe: {
+    text: `<h1>Where's the cafe?</h1>
+    <br>
+    <p>*Hic* "You should know, fella!" *Hic* "Jus..Just go down the hall, to the left, go on, shoo!" *Hic*</p>
+    <p>The voice increases in inebriation and you decide it's best not to ask any further questions. 
+    <br>`,
+    img: "assets/img/guards.jpg",
+    sound: "assets/sfx/hiccup.mp3",
+    fade: true,
+    choices: [
+      { text: "Go down the hall", next: "cafeteriaMain" },
+    ]
+  },
+  
+              cafeteriaMain: {
+    text: `<h1>Cafeteria</h1>
+    <br>
+    <p>You walk into the dreary greyscale cafeteria. There are several cracks in the ceiling and persistent drips of heavy water coming from them.</p>
+    <p>You decide to...</p>
+    <br>`,
+    img: "assets/img/cafeteria.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Pick up juice", next: "juicePickup" },
+    ]
+  },
+  
+    juicePickup: {
+    text: `<img src="assets/img/juice.jpg" class="scene-notebook">`,
+    img: "assets/img/cafeteria.jpg",
+    sound: "", 
+    fade: true,
+    choices: [
+      { text: "Okay", next: "cafeteriaMain" },
+    ]
+  },
+  
+
+  
+  
+};
+
+// =========================
+// AUDIO UTILITIES
+// =========================
+function startBackgroundAudio() {
+  if (isMuted) return;
+
+  const bgAudio = document.getElementById("bg-audio");
+  bgAudio.loop = true;
+  bgAudio.volume = 0.4;
+  bgAudio.play().catch(() => console.warn("Background audio blocked"));
+
+  const thunder = document.getElementById("thunder");
+  const minDelay = 30000;
+  const maxDelay = 90000;
+
+  function scheduleThunder() {
+    if (isMuted) return;
+    const delay = Math.random() * (maxDelay - minDelay) + minDelay;
+    setTimeout(() => {
+      thunder.currentTime = 0;
+      thunder.play().catch(() => {});
+      scheduleThunder();
+    }, delay);
+  }
+
+  scheduleThunder();
+}
+
+// Universal play function that respects mute
+function playSound(src) {
+  if (isMuted || !src) return;
+  const sfx = new Audio(src);
+  sfx.play().catch(() => {});
+}
+
+// =========================
+// BLUR TRANSITION
+// =========================
+function runBlurTransition(callback) {
+  const overlay = document.getElementById("blur-overlay");
+  if (!overlay) return callback();
+
+  overlay.classList.add("active"); // blur + darken
+
+  setTimeout(() => {
+    callback(); // swap content while overlay is active
+    overlay.classList.remove("active"); // unblur
+  }, 400); // match CSS transition duration
+}
+
+// =========================
+// SCENE HANDLING
+// =========================
+function loadScene(sceneName) {
+  const scene = scenes[sceneName];
+  if (!scene) {
+    console.error("Scene not found:", sceneName);
+    return;
+  }
+
+  const sceneBox = document.getElementById("scene");
+  const choicesBox = document.getElementById("choices");
+  if (!sceneBox || !choicesBox) return;
+
+  const applyScene = () => {
+    // Play optional scene sound
+    playSound(scene.sound);
+
+    // Set background
+    document.body.style.backgroundImage = `url(${scene.img})`;
+
+    // Set scene text
+    const formattedText = scene.text.replace(/<br\s*\/?>/gi, '<span class="small-gap"></span>');
+    sceneBox.innerHTML = formattedText;
+
+    // Populate choices
+    choicesBox.innerHTML = "";
+    if (scene.choices) {
+      scene.choices.forEach(choice => {
+        const button = document.createElement("button");
+        button.textContent = choice.text;
+        button.addEventListener("click", () => loadScene(choice.next));
+        choicesBox.appendChild(button);
+      });
     }
   };
 
-  /* ---------- Utility: unified scene transition ---------- */
-
-  async function goToScene(key, preloadSrc) {
-    await fadeScreen(true);
-    if (preloadSrc) { const img = new Image(); img.src = preloadSrc; }
-    renderScene(key);
-    await fadeScreen(false);
+  if (scene.fade === true) {
+    runBlurTransition(applyScene);
+  } else {
+    applyScene();
   }
+}
 
-  /* ---------- Modal helpers ---------- */
+// =========================
+// SPLASH SCREEN HANDLER
+// =========================
+window.addEventListener("DOMContentLoaded", () => {
+  const splash = document.getElementById("splash");
+  const playBtn = document.getElementById("splash-play");
+  const muteBtn = document.getElementById("splash-mute");
+  const gameContainer = document.getElementById("game-container");
 
-  function ensureModal() {
-    if (!document.getElementById('image-modal')) {
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = `
-        <div id="image-modal" class="image-modal" role="dialog" aria-modal="true"
-             aria-labelledby="image-modal-title" aria-hidden="true">
-          <div class="image-modal__box">
-            <button id="modal-close" class="image-modal__close" aria-label="Close (Esc)">✕</button>
-            <img class="image-modal__img" src="assets/img/notebook.jpg" alt="Notebook with a handwritten list" />
-            <h2 id="image-modal-title" class="visually-hidden">Notebook</h2>
-          </div>
-        </div>`;
-      document.body.appendChild(wrapper.firstElementChild);
-    }
-    modal = document.getElementById('image-modal');
-    modalClose = document.getElementById('modal-close');
-    modalImg = modal.querySelector('.image-modal__img');
+  // Play with sound
+  playBtn.addEventListener("click", () => {
+    isMuted = false;
+    startBackgroundAudio();
+    loadScene("start");
 
-    if (!modal.dataset.wired) {
-      modal.dataset.wired = 'true';
-      modalClose.addEventListener('click', closeNotebookModal);
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
-          e.preventDefault();
-          closeNotebookModal();
-        }
-      });
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeNotebookModal();
-      });
-    }
-  }
-
-  async function playPaperSfx() {
-    if (!paper) return;
-    if (audio.muted) return; // honor global mute
-    try {
-      paper.volume = PAPER_VOLUME;
-      paper.currentTime = 0;
-      await paper.play();
-    } catch { /* ignore */ }
-  }
-
-  function openNotebookModal() {
-    ensureModal();
-    lastFocusedEl = document.activeElement;
-    playPaperSfx();
-
-    if (!state.notebookOpened) {
-      state.notebookOpened = true;
-      // Re-render cell to inject Continue
-      renderScene('cell');
-    }
-
-    modal.classList.add('is-open');
-    modal.setAttribute('aria-hidden', 'false');
-    modalClose.focus();
-    if (modalImg && !modalImg.src.includes('notebook.jpg')) {
-      modalImg.src = 'assets/img/notebook.jpg';
-    }
-  }
-
-  function closeNotebookModal() {
-    if (!modal) return;
-    modal.classList.remove('is-open');
-    modal.setAttribute('aria-hidden', 'true');
-    if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') {
-      lastFocusedEl.focus();
-    }
-  }
-
-  /* ---------- UI helpers ---------- */
-
-  function updateMuteButtonIcon() {
-    const isMuted = audio.muted || audio.volume === 0;
-    muteBtn.textContent = isMuted ? '🔇' : '🔊';
-    muteBtn.setAttribute('aria-pressed', String(isMuted));
-    muteBtn.setAttribute('aria-label', isMuted ? 'Unmute background audio' : 'Mute background audio');
-    muteBtn.title = isMuted ? 'Unmute (M)' : 'Mute (M)';
-  }
-
-  function fadeScreen(toBlack) {
-    return new Promise((resolve) => {
-      if (reducedMotion) {
-        fadeLayer.classList.toggle('is-visible', toBlack);
-        resolve();
-        return;
-      }
-      const done = () => resolve();
-      fadeLayer.addEventListener('transitionend', done, { once: true });
-      fadeLayer.classList.toggle('is-visible', toBlack);
-      setTimeout(done, 520);
-    });
-  }
-
-  function renderScene(key) {
-    const sc = scenes[key];
-    document.body.classList.remove(...Object.values(scenes).map(s => s.bodyClass));
-    document.body.classList.add(sc.bodyClass);
-
-    sceneRoot.innerHTML = `
-      <section class="text-card">
-        <h1 class="${key === 'ending1' ? 'ending-title' : ''}">${sc.title}</h1>
-        <p class="lead">${(sc.lead || '').replace(/\n/g, '<br>')}</p>
-        ${sc.showPlay ? `
-          <p class="play-btn">
-            <button id="play-btn" class="btn btn-play" aria-label="Begin">▶</button>
-          </p>
-        ` : ``}
-        ${sc.extraHTML || ``}
-        ${key === 'cell' && state.notebookOpened ? `
-          <p>
-            <button id="continue-btn" class="btn btn-continue">Continue</button>
-          </p>
-        ` : ``}
-      </section>
-    `;
-
-    // Bind per-scene events
-    const newPlayBtn = document.getElementById('play-btn');
-    if (newPlayBtn) newPlayBtn.addEventListener('click', handleBegin);
-
-    const openNotebookBtn = document.getElementById('open-notebook');
-    if (openNotebookBtn) openNotebookBtn.addEventListener('click', openNotebookModal);
-
-    const continueBtn = document.getElementById('continue-btn');
-    if (continueBtn) continueBtn.addEventListener('click', handleContinue);
-
-    // Corridor choices
-    const btnViewport = document.getElementById('btn-viewport');
-    const btnJerry    = document.getElementById('btn-yell-jerry');
-    const btnGiveUp   = document.getElementById('btn-give-up');
-
-    if (btnViewport) btnViewport.addEventListener('click', () => goToScene('viewport', 'assets/img/jail2.jpg'));
-    if (btnJerry)    btnJerry.addEventListener('click', () => goToScene('callJerry', 'assets/img/jail2.jpg'));
-    if (btnGiveUp)   btnGiveUp.addEventListener('click', () => goToScene('ending1', 'assets/img/jail1-blur.jpg'));
-
-    // Jerry Back button
-    const backBtn = document.getElementById('back-to-corridor');
-    if (backBtn) backBtn.addEventListener('click', () => goToScene('corridor', 'assets/img/jail2.jpg'));
-
-    // Ending restart
-    const restartBtn = document.getElementById('restart-btn');
-    if (restartBtn) restartBtn.addEventListener('click', () => {
-      state.notebookOpened = false;
-      goToScene('intro', 'assets/img/jail1-blur.jpg');
-    });
-  }
-
-  async function handleBegin() {
-    await goToScene('cell', 'assets/img/jail1.jpg');
-  }
-
-  async function handleContinue() {
-    await goToScene('corridor', 'assets/img/jail2.jpg');
-  }
-
-  /* ---------- Thunder scheduling ---------- */
-
-  thunder.volume = THUNDER_VOLUME;
-  let thunderScheduled = false;
-  let thunderTimer = null;
-
-  const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-  function queueNextThunder() {
-    const delayMs = randInt(30, 90) * 1000;
-    clearTimeout(thunderTimer);
-    thunderTimer = setTimeout(playThunderOnce, delayMs);
-  }
-
-  async function playThunderOnce() {
-    if (audio.muted) { queueNextThunder(); return; }
-    if (!thunder.paused) { queueNextThunder(); return; }
-    try {
-      thunder.currentTime = 0;
-      await thunder.play();
-    } catch { /* ignore */ }
-    finally {
-      queueNextThunder();
-    }
-  }
-
-  function startThunderScheduleIfNeeded() {
-    if (!thunderScheduled) {
-      thunderScheduled = true;
-      queueNextThunder();
-    }
-  }
-
-  /* ---------- Autoplay logic (rain) — NO fade-in ---------- */
-
-  const savedMuted = localStorage.getItem(STORAGE_KEY);
-  const prefersMuted = savedMuted === 'true';
-
-  audio.loop = true;
-  audio.preload = 'auto';
-  audio.setAttribute('playsinline', '');
-  audio.volume = TARGET_VOLUME;
-  audio.muted = false;
-
-  async function tryAutoplay() {
-    if (prefersMuted) audio.muted = true;
-
-    try {
-      audio.muted = !!prefersMuted;
-      await audio.play();
-      if (hint) hint.hidden = true;
-      if (!audio.muted) startThunderScheduleIfNeeded();
-    } catch {
-      audio.muted = true;
-      try { await audio.play(); } catch {}
-      if (hint) hint.hidden = false;
-
-      const unmuteOnce = () => {
-        audio.muted = false;
-        audio.volume = TARGET_VOLUME;
-        if (hint) hint.hidden = true;
-        startThunderScheduleIfNeeded();
-        window.removeEventListener('pointerdown', unmuteOnce);
-        window.removeEventListener('keydown', unmuteOnce);
-        syncMuteToSfx();
-        updateMuteButtonIcon();
-      };
-      window.addEventListener('pointerdown', unmuteOnce, { once: true });
-      window.addEventListener('keydown', unmuteOnce, { once: true });
-    }
-
-    syncMuteToSfx();
-    updateMuteButtonIcon();
-  }
-
-  // Keep all SFX in sync with the master mute
-  function syncMuteToSfx() {
-    thunder.muted = audio.muted;
-    if (paper) paper.muted = audio.muted;
-  }
-
-  /* ---------- Controls ---------- */
-
-  muteBtn.addEventListener('click', () => {
-    audio.muted = !audio.muted;
-    localStorage.setItem(STORAGE_KEY, String(audio.muted));
-    syncMuteToSfx();
-    if (!audio.muted) startThunderScheduleIfNeeded();
-    updateMuteButtonIcon();
+    splash.style.opacity = "0";
+    splash.style.transition = "opacity 0.6s ease";
+    setTimeout(() => splash.style.display = "none", 600);
+    gameContainer.classList.remove("hidden");
   });
 
-  window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'm') {
-      e.preventDefault();
-      muteBtn.click();
-    }
+  // Mute
+  muteBtn.addEventListener("click", () => {
+    isMuted = true;
+    loadScene("start");
+
+    splash.style.opacity = "0";
+    splash.style.transition = "opacity 0.6s ease";
+    setTimeout(() => splash.style.display = "none", 600);
+    gameContainer.classList.remove("hidden");
   });
+});
 
-  // Bind initial ▶ button if present on first render
-  if (playBtn) playBtn.addEventListener('click', handleBegin);
+// =========================
+//  INIT
+// =========================
+window.addEventListener("load", () => {
 
-  // Boot
-  window.addEventListener('DOMContentLoaded', tryAutoplay);
-  audio.addEventListener('volumechange', updateMuteButtonIcon);
-  updateMuteButtonIcon();
-})();
+});

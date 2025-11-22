@@ -1,68 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Escape the Flood — Intro</title>
-
-  <!-- Images -->
-  <link rel="preload" as="image" href="assets/img/jail1-blur.jpg" />
-  <link rel="preload" as="image" href="assets/img/jail1.jpg" />
-  <link rel="preload" as="image" href="assets/img/jail2.jpg" />
-  <link rel="preload" as="image" href="assets/img/notebook.jpg" />
-
-  <!-- Audio -->
-  <link rel="preload" as="audio" href="assets/sfx/rain.mp3" type="audio/mpeg" />
-  <link rel="preload" as="audio" href="assets/sfx/thunder.mp3" type="audio/mpeg" />
-  <link rel="preload" as="audio" href="assets/sfx/paper.mp3" type="audio/mpeg" />
-
-  <link rel="stylesheet" href="style.css" />
-  <meta name="theme-color" content="#0a0f14" />
+  <meta charset="UTF-8">
+  <title>Escape the Flood</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+<body>
 
-<body class="scene-intro">
-  <main id="scene-root" class="content" aria-live="polite">
-    <!-- Intro scene markup (script re-renders for other scenes) -->
-    <section class="text-card">
-      <h1>Escape the Flood</h1>
-      <p class="lead">Can you escape before the flood?</p>
-      <p class="play-btn">
-        <button id="play-btn" class="btn btn-play" aria-label="Begin">▶</button>
-      </p>
-    </section>
-  </main>
-
-  <!-- Mute toggle -->
-  <button id="mute-btn" class="btn btn-icon" aria-pressed="false" aria-label="Mute background rain" title="Mute (M)">
-    🔊
-  </button>
-
-  <!-- Autoplay hint when needed -->
-  <div id="autoplay-hint" class="autoplay-hint" hidden>
-    🔇 Sound will start on first tap/keypress (policy).
-  </div>
-
-  <!-- Fullscreen fade layer for scene transitions -->
-  <div id="fade-overlay" class="fade-overlay" aria-hidden="true"></div>
-
-  <!-- Static modal (script can also auto-create if missing) -->
-  <div id="image-modal" class="image-modal" role="dialog" aria-modal="true" aria-labelledby="image-modal-title" aria-hidden="true">
-    <div class="image-modal__box">
-      <button id="modal-close" class="image-modal__close" aria-label="Close (Esc)">✕</button>
-      <img class="image-modal__img" src="assets/img/notebook.jpg" alt="Notebook with a handwritten list" />
-      <h2 id="image-modal-title" class="visually-hidden">Notebook</h2>
+  <div id="splash">
+    <div id="splash-content">
+      <button id="splash-play" class="splash-btn">🔊</button>
+      <button id="splash-mute" class="splash-btn">🔇</button>
+      <p class="splash-text">Best played with sound</p>
     </div>
   </div>
 
-  <!-- Audio elements -->
-  <audio id="bg-audio" src="assets/sfx/rain.mp3" preload="auto" loop playsinline autoplay></audio>
-  <audio id="sfx-thunder" src="assets/sfx/thunder.mp3" preload="auto" playsinline></audio>
-  <audio id="sfx-paper"   src="assets/sfx/paper.mp3"   preload="auto" playsinline></audio>
-
-  <noscript>
-    <div class="noscript">This game needs JavaScript enabled.</div>
-  </noscript>
-
-  <script src="script.js" defer></script>
+  <div id="game-container" class="hidden">  
+    <div id="scene"></div>
+    <div id="choices"></div>
+  </div>
+  
+  <div id="blur-overlay"></div>
+   <audio id="bg-audio" src="assets/sfx/rain.mp3" loop preload="auto"></audio>
+  <audio id="thunder" src="assets/sfx/thunder.mp3" preload="auto"></audio>
+  <script src="script.js"></script>
 </body>
 </html>
