@@ -7,8 +7,29 @@ Sounds:
 - https://freesound.org/people/tomlyne/sounds/833283
 - https://freesound.org/people/ocramrudiger/sounds/832547
 - https://freesound.org/people/gynation/sounds/82381
+- https://freesound.org/people/Syna-Max/sounds/35902/
+- https://freesound.org/people/Jagadamba/sounds/254337/
+- https://freesound.org/people/Nanakisan/sounds/253528/
+- https://freesound.org/people/deleted_user_2104797/sounds/166142/
+- https://freesound.org/people/engreitz/sounds/79773/
+- https://freesound.org/people/ottophokus/sounds/78402/
+- https://freesound.org/people/lipalearning/sounds/428635/
+
 
 Images:
 - Photo by Jimmy Chan: https://www.pexels.com/photo/hallway-with-window-1309902
 - Photo by Cameron Casey: https://www.pexels.com/photo/grey-steel-grill-1687067
 - Photo by Pixabay: https://www.pexels.com/photo/person-holding-empty-notebook-268349
+- Photo by Any Lane: https://www.pexels.com/photo/unrecognizable-woman-holding-bottle-of-red-juice-against-white-wall-5945669/
+- Photo by Caleb Oquendo: https://www.pexels.com/photo/empty-modern-school-cafeteria-with-reflection-34779210/
+
+
+  const scenes = {
+    intro: {
+      bodyClass: 'scene-intro',
+      bg: 'assets/img/jail1-blur.jpg',
+      title: 'Escape the Flood',
+      lead: 'Can you escape before the flood?',
+      showPlay: true,
+      extraHTML: ''
+    },
